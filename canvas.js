@@ -3,12 +3,10 @@ const canvas = document.querySelector('canvas');
 //canvas.width = Math.min(window.innerWidth, window.innerHeight) / 1.5;
 //canvas.height = canvas.width;
 
-canvas.width = window.innerWidth / 1.3;
+canvas.width = window.innerWidth / 1.1;
 canvas.height = window.innerHeight / 1.5;
 
 const ctx = canvas.getContext('2d');
-
-let fps = 30;
 
 class Grid {
   constructor(cols, rows) {
@@ -62,16 +60,38 @@ class Grid {
   }
 
   draw() {
+    // Fill background
+    ctx.fillStyle = '#111';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw populated cells
     for (let y = 0; y < this.rows; y++) {
       for (let x = 0; x < this.cols; x++) {
-        ctx.strokeStyle = this.cells[y][x] === 0 ? '#aaa' : 'black';
-        ctx.lineWidth = this.cellSize * 0.1;
-        ctx.strokeRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
-
-        ctx.fillStyle = this.cells[y][x] === 0 ? '#111' : 'white';
-        ctx.fillRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
+        if (this.cells[y][x] === 1) {
+          ctx.fillStyle = 'white';
+          ctx.fillRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
+  
+        }
       }
-    }   
+    }
+    
+    // Draw grid
+    ctx.lineWidth = this.cellSize * 0.05;
+    ctx.strokeStyle = 'white';
+
+    for (let y = 0; y <= this.rows; y++) {
+      ctx.beginPath();
+      ctx.moveTo(0, y * this.cellSize);
+      ctx.lineTo(canvas.width, y * this.cellSize);
+      ctx.stroke();
+    }
+
+    for (let x = 0; x <= this.cols; x++) {
+      ctx.beginPath();
+      ctx.moveTo(x * this.cellSize, 0);
+      ctx.lineTo(x * this.cellSize, canvas.height);
+      ctx.stroke();
+    }
   }
 
   adjacentPopulation(x, y) {
@@ -148,11 +168,18 @@ class Grid {
   }
 }
 
-const grid = new Grid(Math.floor(canvas.width / 10), Math.floor(canvas.height / 10));
+const scaleInput = document.querySelector('#size');
+
+let cellScale = Number(scaleInput.value);
+
+let grid = new Grid(Math.ceil(canvas.width / cellScale), Math.ceil(canvas.height / cellScale));
 console.log(grid);
 
-addEventListener('click', (event) => grid.toggleCell(event.clientX, event.clientY))
+addEventListener('mousedown', (event) => grid.toggleCell(event.clientX, event.clientY))
 
+const speedInput = document.querySelector('#speed');
+
+let fps = Number(speedInput.value);
 
 const animate = () => {
   if (grid.animating) {    
@@ -173,7 +200,18 @@ const animate = () => {
 const updateGeneration = () => {
   const gen = document.querySelector('#generations');
 
-  gen.innerHTML = `Generation ${grid.generation}`;
+  gen.innerHTML = `Generation: ${grid.generation}`;
+}
+
+const randomizeGrid = () => {
+  grid.clearGrid();
+  grid.addRandomPopulation();
+  grid.draw();
+}
+
+const clearGrid = () => {
+  grid.clearGrid();
+  updateGeneration();
 }
 
 const start = () => {
@@ -200,7 +238,10 @@ const stop = () => {
   }
 };
 
-const clearGrid = () => {
-  grid.clearGrid();
-  updateGeneration();
+const updateSpeed = event => fps = Number(event.value);
+
+const updateCellScale = event => {
+  stop();
+  cellScale = Number(event.value);
+  grid = new Grid(Math.ceil(canvas.width / cellScale), Math.ceil(canvas.height / cellScale));
 }

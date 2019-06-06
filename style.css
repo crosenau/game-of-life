@@ -8,6 +8,10 @@ body {
   align-items: center;
 }
 
+h1 {
+  margin-top: 0;
+}
+
 canvas {
   margin: 2rem;
 }
@@ -22,6 +26,31 @@ canvas {
 
 #controls {
   margin: 1rem 2rem 2rem 2rem;
+}
+
+#speed-container {
+  display: inline-block;
+  position: relative;
+}
+
+#speed-container::after {
+  color: white;
+  position: absolute;
+  top: 2px;
+  right: 1.5em;
+  content: 'hz';
+}
+
+#size-container {
+  display: inline-block;
+}
+
+input {
+  background-color: black;
+  color: white;
+  border: none;
+  width: 3.5rem;
+  padding: 0.2rem 0 0.2rem 0.4rem;
 }
 
 button {
