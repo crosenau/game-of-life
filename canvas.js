@@ -1,119 +1,206 @@
 const canvas = document.querySelector('canvas');
 
-canvas.width = Math.min(window.innerWidth, window.innerHeight) / 1.5;
-canvas.height = canvas.width;
+//canvas.width = Math.min(window.innerWidth, window.innerHeight) / 1.5;
+//canvas.height = canvas.width;
+
+canvas.width = window.innerWidth / 1.3;
+canvas.height = window.innerHeight / 1.5;
 
 const ctx = canvas.getContext('2d');
 
-const gridWidth = 40;
-const gridHeight = 40;
+let fps = 30;
 
-let grid = buildGrid(gridWidth, gridHeight);
+class Grid {
+  constructor(cols, rows) {
+    this.cols = cols;
+    this.rows = rows;
+    this.cellSize = canvas.width / Math.max(rows, cols)
+    this.cells = [];
+    this.generation = 0;
 
-console.log(grid);
+    this.lastUpdate = null;
+    this.animating = false;
 
-// add life
-grid[19][20] = 1;
-grid[19][21] = 1;
-grid[19][22] = 1;
-grid[19][23] = 1;
-grid[19][24] = 1;
-grid[19][25] = 1;
-grid[19][26] = 1;
-grid[19][27] = 1;
-grid[19][28] = 1;
-grid[19][29] = 1;
+    this.buildGrid();
+    this.addRandomPopulation();
+    this.draw();
+  }
 
+  buildGrid() {
+    for (let y = 0; y < this.rows; y++) {
+      let row = [];
+      
+      for (let x = 0; x < this.cols; x++) {
+        row.push(0);
+      }
+  
+      this.cells.push(row);
+    }   
+  }
 
-const fps = 6;
+  clearGrid() {
+    for (let y = 0; y < this.rows; y++) {
+      for (let x = 0; x < this.cols; x++) {
+        this.cells[y][x] = 0;
+      }
+    }
 
-let lastUpdate = Date.now();
+    this.generation = 0;
 
-animate();
+    if (!this.animating) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      this.draw();
+    }
+  }
 
-function buildGrid(columns, rows) {
-  let grid = [];
+  addRandomPopulation() {
+    for (let y = 0; y < this.rows; y++) {
+      for (let x = 0; x < this.cols; x++) {
+        this.cells[y][x] = Math.round(Math.random() - 0.1);
+      }
+    }
+  }
 
-  for (let y = 0; y < rows; y++) {
-    let row = [];
+  draw() {
+    for (let y = 0; y < this.rows; y++) {
+      for (let x = 0; x < this.cols; x++) {
+        ctx.strokeStyle = this.cells[y][x] === 0 ? '#aaa' : 'black';
+        ctx.lineWidth = this.cellSize * 0.1;
+        ctx.strokeRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
+
+        ctx.fillStyle = this.cells[y][x] === 0 ? '#111' : 'white';
+        ctx.fillRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
+      }
+    }   
+  }
+
+  adjacentPopulation(x, y) {
+    // adjacent cells
+    const west = x > 0 ? this.cells[y][x-1] : 0;
+    const east = x < this.cols - 1 ? this.cells[y][x+1] : 0;
+    const north = y > 0 ? this.cells[y-1][x] : 0;
+    const northWest = (y > 0 && x > 0) ? this.cells[y-1][x-1] : 0;
+    const northEast = (y > 0 && x < this.cols - 1) ? this.cells[y-1][x+1] : 0;
+    const south = y < this.rows - 1 ? this.cells[y+1][x] : 0;
+    const southWest = (y < this.rows -1 && x > 0) ? this.cells[y+1][x-1]: 0;
+    const southEast = (y < this.rows -1 && x < this.cols - 1) ? this.cells[y+1][x+1] : 0;
+  
+    const totalPopulation = west + east + north + northWest + northEast + south + southWest + southEast;
     
-    for (let x = 0; x < columns; x++) {
-      row.push(0);
-    }
-
-    grid.push(row);
+    return totalPopulation;
   }
 
-  return grid;
-}
+  update() {
+    const nextGrid = [];
 
-function drawGrid() {
-  const cellSize = canvas.width / Math.max(gridWidth, gridHeight);
+    for (let y = 0; y < this.rows; y++) {
+      let row = [];
 
-  for (let y = 0; y < gridHeight; y++) {
-    for (let x = 0; x < gridWidth; x++) {
-      ctx.fillStyle = grid[y][x] === 0 ? '#444' : 'white';
-      ctx.strokeStyle = grid[y][x] === 0 ? 'white' : 'black';
-
-      ctx.strokeRect(x * cellSize, y * cellSize, cellSize, cellSize);
-      ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
-    }
-  }
-}
-
-function adjacentLife(x, y) {
-  // adjacent cells
-  const west = x > 0 ? grid[y][x-1] : 0;
-  const east = x < gridWidth - 1 ? grid[y][x+1] : 0;
-  const north = y > 0 ? grid[y-1][x] : 0;
-  const northWest = (y > 0 && x > 0) ? grid[y-1][x-1] : 0;
-  const northEast = (y > 0 && x < gridWidth - 1) ? grid[y-1][x+1] : 0;
-  const south = y < gridHeight - 1 ? grid[y+1][x] : 0;
-  const southWest = (y < gridHeight -1 && x > 0) ? grid[y+1][x-1]: 0;
-  const southEast = (y < gridHeight -1 && x < gridWidth - 1) ? grid[y+1][x+1] : 0;
-
-  const totalLife = west + east + north + northWest + northEast + south + southWest + southEast;
-
-  //console.log(x, y, grid[y][x]);
-  //console.log(totalLife);
-
-  return totalLife;
-}
-
-function update() {
-  console.log('update')
-  const nextGrid = buildGrid(gridWidth, gridHeight);
-
-  for (let y = 0; y < gridHeight; y++) {
-    for (let x = 0; x < gridWidth; x++) {
-      const totalLife = adjacentLife(x, y);
-
-      if (grid[y][x] === 1) {
-        if (totalLife < 2 || totalLife > 3) {
-          nextGrid[y][x] = 0;
+      for (let x = 0; x < this.cols; x++) {
+        const population = this.adjacentPopulation(x, y);
+  
+        if (this.cells[y][x] === 1) {
+          if (population < 2 || population > 3) {
+            row.push(0);
+          } else {
+            row.push(1);
+          }
         } else {
-          nextGrid[y][x] = 1;
+          if (population === 3) {
+            row.push(1);
+          } else {
+            row.push(0);
+          }
         }
-      } else if (totalLife === 3) {
-        nextGrid[y][x] = 1;
       }
 
+      nextGrid.push(row);
+    }
+  
+    this.cells = nextGrid;
+    this.lastUpdate = Date.now();
+    this.generation++;
+  }
+
+  toggleCell(xPos, yPos) {
+    for (let y = 0; y < this.rows; y++) {
+      const yMin = y * this.cellSize + canvas.offsetTop;
+      const yMax = yMin + this.cellSize;
+
+      if (!(yPos > yMin && yPos < yMax)) {
+        continue;
+      }
+
+      for (let x = 0; x < this.cols; x++) {
+        const xMin = x * this.cellSize + canvas.offsetLeft;
+        const xMax = xMin + this.cellSize;
+
+        if (xPos > xMin && xPos < xMax) {
+          this.cells[y][x] = this.cells[y][x] ? 0 : 1;
+
+          if (!this.animating) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            this.draw();
+          }
+        }
+      }
     }
   }
-
-  grid = nextGrid;
 }
 
-function animate() {
-  requestAnimationFrame(animate);
-  
-  const frameDelay = 1000 / fps;
-  
-  if (Date.now() - lastUpdate >= frameDelay) {
-    lastUpdate = Date.now();
+const grid = new Grid(Math.floor(canvas.width / 10), Math.floor(canvas.height / 10));
+console.log(grid);
+
+addEventListener('click', (event) => grid.toggleCell(event.clientX, event.clientY))
+
+
+const animate = () => {
+  if (grid.animating) {    
+    const frameDelay = 1000 / fps;
     
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawGrid();
-    update();
+    if (Date.now() - grid.lastUpdate >= frameDelay) {      
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      grid.update();
+      grid.draw();
+
+      updateGeneration();
+    }
+
+    requestAnimationFrame(animate);
   }
+}
+
+const updateGeneration = () => {
+  const gen = document.querySelector('#generations');
+
+  gen.innerHTML = `Generation ${grid.generation}`;
+}
+
+const start = () => {
+  if (!grid.animating) {
+    const btn = document.querySelector('#play-stop');
+
+    btn.innerHTML = 'Stop';
+    btn.onclick = stop;
+
+    grid.animating = true;
+      
+    animate();
+  }
+};
+
+const stop = () => {
+  if (grid.animating) {
+    const btn = document.querySelector('#play-stop');
+  
+    btn.innerHTML = 'Play';
+    btn.onclick = start;
+  
+    grid.animating = false;
+  }
+};
+
+const clearGrid = () => {
+  grid.clearGrid();
+  updateGeneration();
 }

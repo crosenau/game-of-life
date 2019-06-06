@@ -1,0 +1,37 @@
+body {
+  background-color: #ddd;
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+canvas {
+  margin: 2rem;
+}
+
+#main {
+  color: white;
+  background-color: #555;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#controls {
+  margin: 1rem 2rem 2rem 2rem;
+}
+
+button {
+  color: white;
+  background-color: black;
+  padding: 0.2rem 0.4rem 0.2rem 0.4rem;
+  border: none;
+}
+
+button:active {
+  color: black;
+  background-color: white;
+}
