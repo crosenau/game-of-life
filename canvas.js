@@ -1,18 +1,11 @@
-const canvas = document.querySelector('canvas');
-
-//canvas.width = Math.min(window.innerWidth, window.innerHeight) / 1.5;
-//canvas.height = canvas.width;
-
-canvas.width = Math.ceil(window.innerWidth * 0.85);
-canvas.height = Math.ceil(window.innerHeight * 0.65);
-
-const ctx = canvas.getContext('2d');
-
 class Grid {
   constructor(cols, rows) {
     this.cols = cols;
     this.rows = rows;
-    this.cellSize = canvas.width / Math.max(rows, cols)
+    console.log(cols, rows);
+    this.cellSize = canvas.width > canvas.height 
+      ? canvas.width / Math.max(rows, cols) 
+      : canvas.height / Math.max(rows, cols);
     this.cells = [];
     this.generation = 0;
 
@@ -244,7 +237,17 @@ const animate = () => {
   }
 }
 
-addEventListener('mousedown', (event) => grid.toggleCell(event.clientX, event.clientY))
+
+const canvas = document.querySelector('canvas');
+const ctx = canvas.getContext('2d');
+
+canvas.width = Math.ceil(window.innerWidth * 0.85);
+canvas.height = Math.ceil(window.innerHeight * 0.65);
+
+window.addEventListener('mousedown', (event) => grid.toggleCell(event.clientX, event.clientY))
+window.addEventListener('orientationchange', () => {
+
+});
 
 const scaleInput = document.querySelector('#size');
 

@@ -1,48 +1,69 @@
 body {
   background-color: #ddd;
   margin: 0;
-  height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
 }
 
-h1 {
-  margin-top: 0;
-}
-
-canvas {
-  margin: 2rem;
-}
-
 #main {
   color: white;
   background-color: #555;
+  padding: 2rem;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
 #controls {
-  margin: 1rem 2rem 2rem 2rem;
+  margin: 2rem 0 1rem 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+#left {
+  display: flex;
+  justify-content: left;
+}
+
+#right {
+  display: flex;
+  justify-content: right;
+}
+
+#left > * {
+  margin-right: 1rem;
+}
+
+#right > * {
+  margin-left: 1rem;
+}
+
+#center {
+  display: flex;
+  justify-content: center;
 }
 
 #speed-container {
-  display: inline-block;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 #speed-container::after {
   color: white;
   position: absolute;
-  top: 2px;
+  top: 1.2rem;
   right: 1.5em;
   content: 'hz';
+  align-self: flex-end;
 }
 
 #size-container {
-  display: inline-block;
+  display: flex;
+  flex-direction: column;
 }
 
 input {
@@ -56,8 +77,9 @@ input {
 button {
   color: white;
   background-color: black;
-  padding: 0.2rem 0.4rem 0.2rem 0.4rem;
+  padding: 0.4rem 0.8rem 0.4rem 0.8rem;
   border: none;
+  align-self: flex-end;
 }
 
 button:active {
