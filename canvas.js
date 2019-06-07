@@ -3,8 +3,8 @@ const canvas = document.querySelector('canvas');
 //canvas.width = Math.min(window.innerWidth, window.innerHeight) / 1.5;
 //canvas.height = canvas.width;
 
-canvas.width = window.innerWidth / 1.1;
-canvas.height = window.innerHeight / 1.5;
+canvas.width = Math.ceil(window.innerWidth * 0.85);
+canvas.height = Math.ceil(window.innerHeight * 0.65);
 
 const ctx = canvas.getContext('2d');
 
@@ -60,6 +60,8 @@ class Grid {
   }
 
   draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
     // Fill background
     ctx.fillStyle = '#111';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -70,7 +72,6 @@ class Grid {
         if (this.cells[y][x] === 1) {
           ctx.fillStyle = 'white';
           ctx.fillRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
-  
         }
       }
     }
@@ -136,7 +137,7 @@ class Grid {
 
       nextGrid.push(row);
     }
-  
+    
     this.cells = nextGrid;
     this.lastUpdate = Date.now();
     this.generation++;
@@ -168,48 +169,22 @@ class Grid {
   }
 }
 
-const scaleInput = document.querySelector('#size');
-
-let cellScale = Number(scaleInput.value);
-
-let grid = new Grid(Math.ceil(canvas.width / cellScale), Math.ceil(canvas.height / cellScale));
-console.log(grid);
-
-addEventListener('mousedown', (event) => grid.toggleCell(event.clientX, event.clientY))
-
-const speedInput = document.querySelector('#speed');
-
-let fps = Number(speedInput.value);
-
-const animate = () => {
-  if (grid.animating) {    
-    const frameDelay = 1000 / fps;
-    
-    if (Date.now() - grid.lastUpdate >= frameDelay) {      
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      grid.update();
-      grid.draw();
-
-      updateGeneration();
-    }
-
-    requestAnimationFrame(animate);
-  }
-}
-
 const updateGeneration = () => {
-  const gen = document.querySelector('#generations');
+  const genDisplay = document.querySelector('#generations');
 
-  gen.innerHTML = `Generation: ${grid.generation}`;
+  genDisplay.innerHTML = `Generation: ${grid.generation}`;
 }
 
 const randomizeGrid = () => {
+  stop();
   grid.clearGrid();
   grid.addRandomPopulation();
   grid.draw();
+  updateGeneration();
 }
 
 const clearGrid = () => {
+  stop();
   grid.clearGrid();
   updateGeneration();
 }
@@ -238,10 +213,46 @@ const stop = () => {
   }
 };
 
-const updateSpeed = event => fps = Number(event.value);
-
-const updateCellScale = event => {
-  stop();
-  cellScale = Number(event.value);
-  grid = new Grid(Math.ceil(canvas.width / cellScale), Math.ceil(canvas.height / cellScale));
+const setSpeed = value => {
+  fps = Number(value);
+  frameInterval = 1000 / fps;
+  lastFrame = Date.now();
 }
+
+const setCellScale = value => {
+  stop();
+  cellScale = Number(value) * 2;
+  grid = new Grid(Math.ceil(canvas.width / cellScale), Math.ceil(canvas.height / cellScale));
+  updateGeneration();
+}
+
+const animate = () => {
+  if (grid.animating) {
+    const now = Date.now();
+    const elapsed = now - lastFrame;
+
+    if (elapsed >= frameInterval) {      
+      lastFrame = now - (elapsed % frameInterval);
+
+      grid.update();
+      grid.draw();
+
+      updateGeneration();
+    }
+
+    requestAnimationFrame(animate);
+  }
+}
+
+addEventListener('mousedown', (event) => grid.toggleCell(event.clientX, event.clientY))
+
+const scaleInput = document.querySelector('#size');
+
+let cellScale = Number(scaleInput.value) * 2;
+let grid = new Grid(Math.ceil(canvas.width / cellScale), Math.ceil(canvas.height / cellScale));
+
+const speedInput = document.querySelector('#speed');
+
+let fps = speedInput.value;
+let frameInterval = 1000 / fps;
+let lastFrame = Date.now();
