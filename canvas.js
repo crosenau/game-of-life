@@ -2,7 +2,6 @@ class Grid {
   constructor(cols, rows) {
     this.cols = cols;
     this.rows = rows;
-    console.log(cols, rows);
     this.cellSize = canvas.width > canvas.height 
       ? canvas.width / Math.max(rows, cols) 
       : canvas.height / Math.max(rows, cols);
@@ -221,6 +220,8 @@ const setCellScale = value => {
 
 const animate = () => {
   if (grid.animating) {
+    lastFrame = lastFrame ? lastFrame : Date.now();
+
     const now = Date.now();
     const elapsed = now - lastFrame;
 
@@ -258,4 +259,4 @@ const speedInput = document.querySelector('#speed');
 
 let fps = speedInput.value;
 let frameInterval = 1000 / fps;
-let lastFrame = Date.now();
+let lastFrame;
