@@ -1,16 +1,19 @@
+const style = require('../css/style.css');
+
 class Grid {
   constructor(cols, rows) {
     this.cols = cols;
     this.rows = rows;
+    this.cells = [];
     this.cellSize = canvas.width > canvas.height 
       ? canvas.width / Math.max(rows, cols) 
       : canvas.height / Math.max(rows, cols);
-    this.cells = [];
+    
     this.generation = 0;
-
+    this.life = 20; // value representing live cell
     this.lastUpdate = null;
     this.animating = false;
-
+  
     this.buildGrid();
     this.addRandomPopulation();
     this.draw();
@@ -25,7 +28,7 @@ class Grid {
       }
   
       this.cells.push(row);
-    }   
+    }
   }
 
   clearGrid() {
@@ -46,7 +49,7 @@ class Grid {
   addRandomPopulation() {
     for (let y = 0; y < this.rows; y++) {
       for (let x = 0; x < this.cols; x++) {
-        this.cells[y][x] = Math.round(Math.random() - 0.1);
+        this.cells[y][x] = Math.round(Math.random() - 0.1) * this.life;
       }
     }
   }
@@ -55,14 +58,24 @@ class Grid {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Fill background
-    ctx.fillStyle = '#111';
+    ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Draw populated cells
+    const r = 255;
+    const g = 240;
+    const b = 160;
+
     for (let y = 0; y < this.rows; y++) {
       for (let x = 0; x < this.cols; x++) {
-        if (this.cells[y][x] === 1) {
-          ctx.fillStyle = 'white';
+        if (this.cells[y][x] === this.life) {
+          ctx.fillStyle = `rgba(${r}, ${g}, ${b})`;
+          ctx.fillRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
+        } else if (this.cells[y][x] > 0) {
+          const value = this.cells[y][x];
+          
+          ctx.fillStyle =
+            `rgb(${(value / this.life) * r}, ${(value / this.life) * g * 0.3}, ${(value / this.life) * b * 0.05})`
           ctx.fillRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
         }
       }
@@ -92,13 +105,13 @@ class Grid {
     const west = x > 0 ? this.cells[y][x-1] : 0;
     const east = x < this.cols - 1 ? this.cells[y][x+1] : 0;
     const north = y > 0 ? this.cells[y-1][x] : 0;
+    const south = y < this.rows - 1 ? this.cells[y+1][x] : 0;
     const northWest = (y > 0 && x > 0) ? this.cells[y-1][x-1] : 0;
     const northEast = (y > 0 && x < this.cols - 1) ? this.cells[y-1][x+1] : 0;
-    const south = y < this.rows - 1 ? this.cells[y+1][x] : 0;
     const southWest = (y < this.rows -1 && x > 0) ? this.cells[y+1][x-1]: 0;
     const southEast = (y < this.rows -1 && x < this.cols - 1) ? this.cells[y+1][x+1] : 0;
   
-    const totalPopulation = west + east + north + northWest + northEast + south + southWest + southEast;
+    const totalPopulation = [west, east, north, northWest, northEast, south, southWest, southEast].filter(val => val === this.life).length;
     
     return totalPopulation;
   }
@@ -111,20 +124,24 @@ class Grid {
 
       for (let x = 0; x < this.cols; x++) {
         const population = this.adjacentPopulation(x, y);
-  
-        if (this.cells[y][x] === 1) {
+        let nextValue;
+
+        if (this.cells[y][x] === this.life) {
           if (population < 2 || population > 3) {
-            row.push(0);
+            nextValue = this.cells[y][x] - 1;
           } else {
-            row.push(1);
+            nextValue = this.life;
           }
         } else {
           if (population === 3) {
-            row.push(1);
+            nextValue = this.life;
           } else {
-            row.push(0);
+            nextValue = this.cells[y][x] - 1;
           }
         }
+
+        nextValue = nextValue >= 0 ? nextValue : 0;
+        row.push(nextValue);
       }
 
       nextGrid.push(row);
@@ -149,7 +166,7 @@ class Grid {
         const xMax = xMin + this.cellSize;
 
         if (xPos > xMin && xPos < xMax) {
-          this.cells[y][x] = this.cells[y][x] ? 0 : 1;
+          this.cells[y][x] = this.cells[y][x] > 0 ? 0 : this.life;
 
           if (!this.animating) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -183,10 +200,10 @@ const clearGrid = () => {
 
 const start = () => {
   if (!grid.animating) {
-    const btn = document.querySelector('#play-stop');
+    //const btn = document.querySelector('#play-stop');
 
-    btn.innerHTML = 'Stop';
-    btn.onclick = stop;
+    playStopButton.innerHTML = 'Stop';
+    playStopButton.onclick = stop;
 
     grid.animating = true;
       
@@ -205,15 +222,15 @@ const stop = () => {
   }
 };
 
-const setSpeed = value => {
-  fps = Number(value);
+const setSpeed = event => {
+  fps = Number(event.target.value);
   frameInterval = 1000 / fps;
   lastFrame = Date.now();
 }
 
-const setCellScale = value => {
+const setCellScale = event => {
   stop();
-  cellScale = Number(value) * 2;
+  cellScale = Number(event.target.value) * 2;
   grid = new Grid(Math.ceil(canvas.width / cellScale), Math.ceil(canvas.height / cellScale));
   updateGeneration();
 }
@@ -239,24 +256,33 @@ const animate = () => {
 }
 
 
-const canvas = document.querySelector('canvas');
-const ctx = canvas.getContext('2d');
+window.addEventListener('click', (event) => grid.toggleCell(event.clientX, event.clientY))
 
-canvas.width = Math.ceil(window.innerWidth * 0.85);
-canvas.height = Math.ceil(window.innerHeight * 0.65);
-
-window.addEventListener('mousedown', (event) => grid.toggleCell(event.clientX, event.clientY))
-window.addEventListener('orientationchange', () => {
-
-});
-
+const randomizeButton = document.querySelector('#randomize');
+const clearButton = document.querySelector('#clear');
+const playStopButton = document.querySelector('#play-stop');
+const speedInput = document.querySelector('#speed');
 const scaleInput = document.querySelector('#size');
 
-let cellScale = Number(scaleInput.value) * 2;
-let grid = new Grid(Math.ceil(canvas.width / cellScale), Math.ceil(canvas.height / cellScale));
+randomizeButton.onclick = randomizeGrid;
+clearButton.onclick = clearGrid;
+playStopButton.onclick = start;
+speedInput.onchange = setSpeed;
+scaleInput.onchange = setCellScale;
 
-const speedInput = document.querySelector('#speed');
+let cellScale = Number(scaleInput.value) * 2;
 
 let fps = speedInput.value;
 let frameInterval = 1000 / fps;
 let lastFrame;
+
+const canvas = document.querySelector('canvas');
+
+//canvas.width = Math.ceil(window.innerWidth * 0.85);
+//canvas.height = Math.ceil(window.innerHeight * 0.65);
+canvas.width = Number(getComputedStyle(canvas).width.replace('px', ''));
+canvas.height = Number(getComputedStyle(canvas).height.replace('px', ''));
+
+const ctx = canvas.getContext('2d');
+
+let grid = new Grid(Math.ceil(canvas.width / cellScale), Math.ceil(canvas.height / cellScale));
