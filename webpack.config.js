@@ -14,7 +14,19 @@ const config = {
       },
       {
         test: /\.css$/,
-        use: [ { loader: 'style-loader' }, { loader: 'css-loader' }]
+        exclude: /node_modules/,
+        use: [ 
+          { loader: 'style-loader' },
+          { loader: 'css-loader' } 
+        ]
+      },
+      {
+        test: /\.(glsl|vs|fs|vert|frag)$/,
+        exclude: /node_modules/,
+        use: [
+          { loader: 'raw-loader' },
+          { loader: 'glslify-loader' }
+        ]
       }
     ]
   },
