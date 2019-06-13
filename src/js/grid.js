@@ -1,24 +1,23 @@
 import { scaleArray } from './scale';
 
 export default class Grid {
-  constructor(width, height, cols, rows) {
-    this.width = width;
-    this.height = height;
+  constructor(cols, rows, trail = 100) {
     this.cols = cols;
     this.rows = rows;
     this.cells = [];
-    this.cellSize = this.width > this.height 
-      ? this.width / Math.max(rows, cols) 
-      : this.height / Math.max(rows, cols);
     
-    this.generation = 0;
-    this.life = 1000; // value representing live cell
+    this.iteration = 0;
+    this.life = trail; // Represents live cell. Anything lower is transitioning to dead (0). Used for color trail.
     this.animating = false;
 
     this.gridEvent = new Event('gridupdate')
   
     this.buildGrid();
     this.addRandomPopulation();
+  }
+
+  set trail(num) {
+    this.life = num > 0 ? num : this.life;
   }
 
   buildGrid() {
@@ -42,7 +41,7 @@ export default class Grid {
       }
     }
 
-    this.generation = 0;
+    this.iteration = 0;
 
     window.dispatchEvent(this.gridEvent);
   }
@@ -64,7 +63,7 @@ export default class Grid {
     for (let y = 0; y < this.rows; y++) {
       for (let x = 0; x < this.cols; x++) {
         if (this.cells[y][x] > 0) {
-          coords.push([x * this.cellSize, y * this.cellSize]);
+          coords.push([x, y]);
         }
       }
     }
@@ -75,7 +74,7 @@ export default class Grid {
   getCellColors() {
     const colors = [];
 
-    const cellValueRange = [[1, 1, 1], [this.life, this.life, this.life]];
+    const cellValueRange = [[1, 1, 1], [this.life-1, this.life-1, this.life-1]];
     const colorRange = [[-500, -2000, 10], [255, 230, 150]];
 
     const colorMap = [];
@@ -86,7 +85,9 @@ export default class Grid {
 
     for (let y = 0; y < this.rows; y++) {
       for (let x = 0; x < this.cols; x++) {
-        if (this.cells[y][x] > 0) {
+        if (this.cells[y][x] === this.life) {
+          colors.push([255, 250, 245]);
+        } else if (this.cells[y][x] > 0) {
           colors.push(colorMap[this.cells[y][x]]);
         }
       }
@@ -143,13 +144,13 @@ export default class Grid {
     }
     
     this.cells = nextGrid;
-    this.generation++;
+    this.iteration++;
     
     window.dispatchEvent(this.gridEvent);
   }
 
   toggleCell(x, y) {
-    this.cells[y][x] = this.cells[y][x] ? 0 : this.life;
+    this.cells[y][x] = this.cells[y][x] === this.life ? 0 : this.life;
 
     window.dispatchEvent(this.gridEvent);
   }

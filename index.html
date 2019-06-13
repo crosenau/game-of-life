@@ -8,27 +8,31 @@
 </head>
 
 <body>
-  <h1>The Game of Life</h1>
-  <div id='main'>
-    <canvas></canvas>
-    <div id="generations">Generation: 0</div>
+  <canvas></canvas>
+  <div id='menu'>
+    <h1>Game of Life</h1>
+    <div id="iterations">Iteration: 0</div>
     <div id="controls">
-      <div id="left">
+      
+      <div id="buttons">
+        <button id="play-stop">Play</button>
         <button id="randomize">Randomize</button>
         <button id="clear">Clear</button>
       </div>
-      <div id="center">
-        <button id="play-stop">Play</button>
+
+      <div id="input-container">
+          <label for="speed">Speed:</label>
+          <input type="range" id="speed" min="1" max="60" value="60">
       </div>
-      <div id="right">
-        <div id="speed-container">
-          <label for="speed">Speed: </label>
-          <input type="number" id="speed" min="1" max="60" value="1">
-        </div>
-        <div id="size-container">
-          <label for="size">Cell Size: </label>
-          <input type="number" id="size" min="1" max="10" value="3">
-        </div>
+
+      <div id="input-container">
+        <label for="size">Cell Size:</label>
+        <input type="range" id="size" min="1" max="20" value="12">
+      </div>
+
+      <div id="input-container">
+        <label for="trail">Color Trail:</label>
+        <input type="range" id="trail" min="1" max="400" value="100">
       </div>
 
     </div>
