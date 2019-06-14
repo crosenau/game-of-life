@@ -6,6 +6,7 @@ import vertexShader from '../shaders/vertex.glsl';
 import fragmentShader from '../shaders/fragment.glsl';
 
 import '../styles/style.scss';
+import '@fortawesome/fontawesome-free/js/all.js';
 
 const updateiteration = () => {
   const iterDisplay = document.querySelector('#iterations');
@@ -14,94 +15,80 @@ const updateiteration = () => {
 };
 
 const randomizeGrid = () => {
-  stop();
   grid.clearGrid();
   grid.addRandomPopulation();
   updateiteration();
 };
 
 const clearGrid = () => {
-  stop();
   grid.clearGrid();
   updateiteration();
 };
 
 const start = () => {
-  if (!grid.animating) {
-    playStopButton.innerHTML = 'Stop';
-    playStopButton.onclick = stop;
+  if (!animating) {
+    startStopBtn.innerHTML = 'Stop';
+    startStopBtn.onclick = stop;
 
-    grid.animating = true;
+    animating = true;
   }
 };
 
 const stop = () => {
-  if (grid.animating) {
-    const btn = document.querySelector('#play-stop');
+  if (animating) { 
+    startStopBtn.innerHTML = 'Start';
+    startStopBtn.onclick = start;
   
-    btn.innerHTML = 'Play';
-    btn.onclick = start;
-  
-    grid.animating = false;
+    animating = false;
+    lastFrame = null;
   }
 };
 
 const setSpeed = event => {
   fps = Number(event.target.value);
-  frameInterval = 1000 / fps;
   lastFrame = Date.now();
 };
 
 const setCellSize = event => {
-  stop();
-  cellSize = Number(event.target.value);
   grid = new Grid(
-    Math.ceil(canvas.width / cellSize), 
-    Math.ceil(canvas.height / cellSize),
-    trail
+    Math.ceil(canvas.width / Number(sizeInput.value)), 
+    Math.ceil(canvas.height / Number(sizeInput.value)),
+    Number(trailInput.value)
   );
   updateiteration();
 };
 
 const setTrailLength = event => {
-  console.log(event.target.value);
   grid.trail = Number(event.target.value);
   randomizeGrid();
 };
 
-const randomizeButton = document.querySelector('#randomize');
-const clearButton = document.querySelector('#clear');
-const playStopButton = document.querySelector('#play-stop');
+const randomBtn = document.querySelector('#randomize');
+const clearBtn = document.querySelector('#clear');
+const startStopBtn = document.querySelector('#start-stop');
 const speedInput = document.querySelector('#speed');
 const sizeInput = document.querySelector('#size');
 const trailInput = document.querySelector('#trail');
 
-randomizeButton.onclick = randomizeGrid;
-clearButton.onclick = clearGrid;
-playStopButton.onclick = start;
+randomBtn.onclick = randomizeGrid;
+clearBtn.onclick = clearGrid;
+startStopBtn.onclick = start;
 speedInput.onchange = setSpeed;
 sizeInput.onchange = setCellSize;
 trailInput.onchange = setTrailLength;
-
-let cellSize = Number(sizeInput.value);
-let trail = Number(trailInput.value);
-
-let fps = speedInput.value;
-let frameInterval = 1000 / fps;
-let lastFrame;
 
 const canvas = document.querySelector('canvas');
 
 canvas.width = Number(getComputedStyle(canvas).width.replace('px', ''));
 canvas.height = Number(getComputedStyle(canvas).height.replace('px', ''));
 
-const regl = require('regl')(canvas);
-
 let grid = new Grid(
-  Math.ceil(canvas.width / cellSize),
-  Math.ceil(canvas.height / cellSize),
-  trail
+  Math.ceil(canvas.width / Number(sizeInput.value)),
+  Math.ceil(canvas.height / Number(sizeInput.value)),
+  Number(trailInput.value)
 );
+
+const regl = require('regl')(canvas);
 
 const drawCells = regl({
   vert: vertexShader,
@@ -133,42 +120,27 @@ const drawCells = regl({
   primitive: 'points'
 });
 
+let fps = speedInput.value;
+let lastFrame;
+let animating;
+
+let drawing;
+let lastToggledCell = [null, null];
+
 regl.frame(() => {
-  if (grid.animating) {
+  if (animating) {
     lastFrame = lastFrame ? lastFrame : Date.now();
 
     const now = Date.now();
     const elapsed = now - lastFrame;
+    const frameInterval = 1000 / fps;
+
 
     if (elapsed >= frameInterval) {
       lastFrame = now - (elapsed % frameInterval);
 
       grid.update();
       updateiteration();
-    }
-  }
-});
-
-
-window.addEventListener('click', event => {
-  if (event.target.id) return;
-
-  const xPos = event.clientX;
-  const yPos = event.clientY;
-
-  for (let y = 0; y < grid.rows; y++) {
-    const yMin = (y - 0.5) * cellSize + canvas.offsetTop;
-    const yMax = yMin + cellSize;
-
-    if (yPos > yMin && yPos < yMax) {
-      for (let x = 0; x < grid.cols; x++) {
-        const xMin = (x - 1) * cellSize + canvas.offsetLeft;
-        const xMax = xMin + cellSize;
-
-        if (xPos > xMin && xPos < xMax) {
-          grid.toggleCell(x, y);
-        }
-      }
     }
   }
 });
@@ -181,7 +153,47 @@ window.addEventListener('gridupdate', event => {
 
   drawCells({
     coords: grid.getCellCoords(),
-    cellSize: cellSize,
+    cellSize: Number(sizeInput.value),
     color: grid.getCellColors(),
   });
+});
+
+window.addEventListener('mousedown', event => {
+  if (event.target.localName === 'canvas') {
+    drawing = true;
+  }
+});
+
+window.addEventListener('mousemove', event => {
+  if (!drawing) return;
+
+  const xPos = event.clientX;
+  const yPos = event.clientY;
+
+  for (let y = 0; y < grid.rows; y++) {
+    const yMin = (y - 0.5) * Number(sizeInput.value) + canvas.offsetTop;
+    const yMax = yMin + Number(sizeInput.value);
+
+    if (yPos > yMin && yPos < yMax) {
+      for (let x = 0; x < grid.cols; x++) {
+        const xMin = (x - 1) * Number(sizeInput.value) + canvas.offsetLeft;
+        const xMax = xMin + Number(sizeInput.value);
+
+        if (
+          (xPos > xMin && xPos < xMax)
+          && (x !== lastToggledCell[0] || y !== lastToggledCell[1])
+        ) {
+          grid.toggleCell(x, y);
+          lastToggledCell = [x, y];
+        }
+      }
+    }
+  }
+});
+
+window.addEventListener('mouseup', event => {
+  if (drawing) {
+    drawing = false;
+    lastToggledCell = [null, null];
+  }
 });
