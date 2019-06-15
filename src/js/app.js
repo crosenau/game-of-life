@@ -63,12 +63,22 @@ const setTrailLength = event => {
   randomizeGrid();
 };
 
+const setFilter = event => {
+  console.log(event.target.checked);
+  if (event.target.checked) {
+    canvas.classList.add('filter');
+  } else {
+    canvas.classList.remove('filter');
+  }
+}
+
 const randomBtn = document.querySelector('#randomize');
 const clearBtn = document.querySelector('#clear');
 const startStopBtn = document.querySelector('#start-stop');
 const speedInput = document.querySelector('#speed');
 const sizeInput = document.querySelector('#size');
 const trailInput = document.querySelector('#trail');
+const filterSelect = document.querySelector('#filter');
 
 randomBtn.onclick = randomizeGrid;
 clearBtn.onclick = clearGrid;
@@ -76,6 +86,7 @@ startStopBtn.onclick = start;
 speedInput.onchange = setSpeed;
 sizeInput.onchange = setCellSize;
 trailInput.onchange = setTrailLength;
+filterSelect.onchange = setFilter;
 
 const canvas = document.querySelector('canvas');
 
@@ -95,7 +106,7 @@ const drawCells = regl({
   frag: fragmentShader,
   attributes: {
     position: (context, props) => {
-      // Map screen space coordinates to gl coordinates
+      // Map screen pixels to gl coordinates
       return props.coords.map((coord, i) => {
         const domain = [[0, 0], [grid.cols, grid.rows]];
         const range = [[-1, 1], [1, -1]];
@@ -158,17 +169,25 @@ window.addEventListener('gridupdate', event => {
   });
 });
 
-window.addEventListener('mousedown', event => {
-  if (event.target.localName === 'canvas') {
-    drawing = true;
-  }
-});
+const downHandler = event => {
+  drawing = true;
+};
 
-window.addEventListener('mousemove', event => {
+const moveHandler = event => {
   if (!drawing) return;
 
-  const xPos = event.clientX;
-  const yPos = event.clientY;
+  let xPos;
+  let yPos;
+
+  if (event.touches) {
+    event.preventDefault();
+
+    xPos = event.touches[0].clientX;
+    yPos = event.touches[0].clientY;    
+  } else {
+    xPos = event.clientX;
+    yPos = event.clientY;    
+  }
 
   for (let y = 0; y < grid.rows; y++) {
     const yMin = (y - 0.5) * Number(sizeInput.value) + canvas.offsetTop;
@@ -189,11 +208,18 @@ window.addEventListener('mousemove', event => {
       }
     }
   }
-});
+};
 
-window.addEventListener('mouseup', event => {
+const upHandler = event => {
   if (drawing) {
     drawing = false;
     lastToggledCell = [null, null];
   }
-});
+}
+
+canvas.addEventListener('mousedown', downHandler);
+canvas.addEventListener('mousemove', moveHandler);
+canvas.addEventListener('mouseup', upHandler);
+canvas.addEventListener('touchstart', downHandler);
+canvas.addEventListener('touchmove', moveHandler);
+canvas.addEventListener('touchend', upHandler);

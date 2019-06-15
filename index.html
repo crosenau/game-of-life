@@ -9,8 +9,8 @@
 
 <body>
   <canvas></canvas>
-  <div id='menu'>
-    <i class="fas fa-cog" id='settings'></i>
+  <div id="menu">
+    <i class="fas fa-cog" id="settings"></i>
     <h1>Game of Life</h1>
     <div id="iterations">Iteration: 0</div>
     <div id="controls">
@@ -23,7 +23,7 @@
 
       <div id="input-container">
           <label for="speed">Speed:</label>
-          <input type="range" id="speed" min="1" max="60" value="30">
+          <input type="range" id="speed" min="1" max="60" value="25">
       </div>
 
       <div id="input-container">
@@ -36,10 +36,15 @@
         <input type="range" id="trail" min="1" max="400" value="100">
       </div>
 
+      <div id="input-container">
+        <label for="filter">Blur/Contrast Filter:</label>
+        <input type="checkbox" id="filter">
+      </div>
+
     </div>
   </div>
 
-  <script src='/dist/bundle.js'></script>
+  <script src="/dist/bundle.js"></script>
 </body>
 
 </html>
