@@ -1,10 +1,17 @@
 const webpack = require('webpack');
+const path = require('path');
 
 const config = {
-  entry: './src/js/app.js',
+  mode: 'developement',
+  entry: path.join(__dirname, 'src/js/app.js'),
   output: {
-    path: `${__dirname}/dist`,
+    path: path.join(__dirname, 'dist'),
     filename: 'bundle.js'
+  },
+  devServer: {
+    publicPath: '/dist',
+    port: 3000,
+    //disableHostCheck: true
   },
   module: {
     rules: [

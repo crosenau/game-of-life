@@ -7,7 +7,8 @@ export default class Grid {
     this.cells = [];
     
     this.iteration = 0;
-    this.life = trail; // Represents live cell. Anything lower is transitioning to dead (0). Used for color trail.
+    // Represents live cell. Anything lower is transitioning to death (0). Used for color trail.
+    this.life = trail;
 
     this.gridEvent = new Event('gridupdate')
   
